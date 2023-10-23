@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en" class="h-100">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Repos</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-confirm/3.3.4/jquery-confirm.min.css" />
+    <script type="text/javascript" src="https://code.jquery.com/jquery-1.11.0.min.js"></script>
+    <style>
+        body {
+            background-color: #f5f5f5;
+        }
+
+        input {
+            margin-bottom: 10px;
+        }
+
+        .navbar {
+            background-color: #343a40;
+        }
+
+        .navbar-brand,
+        .navbar-nav .nav-link {
+            color: #ffffff;
+        }
+
+        .navbar-toggler-icon {
+            background-color: #ffffff;
+        }
+
+        .navbar-collapse {
+            justify-content: flex-end;
+        }
+
+        .alert {
+            margin-top: 20px;
+        }
+
+        footer {
+            background-color: #343a40;
+        }
+
+        footer .text-white {
+            color: #ffffff;
+        }
+        .table-responsive {
+        overflow-x: auto;
+        }
+
+        /* Add more styling as needed */
+    </style>
+</head>
+
+<body class="d-flex flex-column h-100">
+    <header>
+        <!-- Fixed navbar -->
+        <nav class="navbar navbar-expand-md navbar-dark" style="background-color: #1c6dd6; /* Dark Blue color 336699 0d1eb5*/">
+            <div class="container">
+                <a class="navbar-brand" href="#">Traax</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse"
+                    aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarCollapse">
+                    <ul class="navbar-nav me-auto mb-2 mb-md-0">
+                        <li class="nav-item">
+<!--                            <a class="nav-link active" aria-current="page" href="{{ url_for('aavana.aavana_home') if current_user.project_name == 'AAVANA' else url_for('main.home') }}">Home</a>-->
+                        </li>
+                    </ul>
+                    {% if current_user.is_authenticated %}
+                    <div class="nav-item mx-auto">
+                        <span class="nav-link text-white" style="font-size: 1.2rem; font-weight: bold; margin: 0;">{{ session.get("COMPANY_NAME", 'fgdgd') }}</span>
+                    </div>
+                    {% endif %}
+                    <div class="d-flex navbar-nav ml-auto align-items-center">
+                        {% if current_user.is_authenticated %}
+                        <span class="nav-link text-white">Next Refresh</span>
+                        <div id="countdown"></div>
+                        <a class="nav-link text-white ml-auto mr-0" href="{{ url_for('users.logout') }}">Logout</a>
+                        {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="{{ url_for('users.login') }}">Login</a>
+                        </li>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+    <div role="main" class="container" style="display: inline-block">
+        <div class="row">
+            <div class="col-md-8">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                <!-- ... your messages display ... -->
+                {% endwith %}
+            </div>
+        </div>
+    </div>
+    {% block content %}
+    {% endblock %}
+    <footer class="footer mt-auto py-3 bg-secondary bg-gradient">
+        <div class="container">
+            <span class="text-white">Copyright © Aavana Corporate Solutions Private Limited 2017-2023</span>
+        </div>
+    </footer>
+    {% if current_user.is_authenticated %}
+        <script>
+            // Function to calculate the time remaining until 11:00 AM of the next day
+        function calculateTimeRemaining() {
+            const currentDate = new Date();
+            const targetDate = new Date(currentDate);
+            targetDate.setHours(11, 0, 0, 0); // Set the target time to 11:00 AM
+            if (currentDate >= targetDate) {
+                targetDate.setDate(targetDate.getDate() + 1);
+            }
+            return targetDate - currentDate;
+        }
+
+        // Update the countdown every second
+        const countdown = document.getElementById('countdown');
+        function updateCountdown() {
+            const timeRemaining = calculateTimeRemaining();
+
+            if (timeRemaining <= 0) {
+                // Calculate the target date for 11:00 AM of the next day
+                const nextDay = new Date();
+                nextDay.setHours(11, 0, 0, 0);
+                nextDay.setDate(nextDay.getDate() + 1);
+
+                countdown.innerHTML = "Countdown expired!";
+                setTimeout(updateCountdown, nextDay - new Date()); // Reset at 11:00 AM next day
+            } else {
+                const hours = Math.floor(timeRemaining / (1000 * 60 * 60));
+                const minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((timeRemaining % (1000 * 60)) / 1000);
+
+                countdown.innerHTML = `${hours}h ${minutes}m ${seconds}s`;
+                setTimeout(updateCountdown, 1000); // Update every 1 second
+            }
+        }
+
+        // Initial call to set up the countdown
+        updateCountdown();
+        </script>
+    {% endif %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-confirm/3.3.4/jquery-confirm.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+    <!--Datatble library-->
+    <link href='https://cdn.datatables.net/1.10.24/css/jquery.dataTables.min.css' rel='stylesheet' type='text/css'>
+    <script type="text/javascript" src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
+    <!-- Include the DataTables Buttons CSS and JS files -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/1.7.1/css/buttons.dataTables.min.css">
+    <script src="https://cdn.datatables.net/buttons/1.7.1/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/1.7.1/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/1.7.1/js/buttons.print.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/1.7.1/js/buttons.flash.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.66/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.66/vfs_fonts.js"></script>
+</body>
+
+</html>

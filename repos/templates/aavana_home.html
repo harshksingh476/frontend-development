@@ -1,0 +1,187 @@
+
+{% extends "layout.html" %}
+{% block content %}
+<style>
+    .custom-table-header {
+        background-color: #0D6EFD; /* Adjust the color code as needed */
+        color: white; /* Text color for better visibility */
+    }
+
+    .btn-download {
+        margin-right: 10px;
+    }
+    /* small dowmload button*/
+    .btn-smaller {
+        font-size: 0.75rem; /* Adjust the font size as needed */
+        padding: 0.25rem 0.5rem; /* Adjust padding as needed */
+    }
+    .cancel-icon {
+        font-size: 1rem; /* Adjust icon size as needed */
+        color: red; /* Adjust icon color as needed */
+    }
+    .download-cancel-container {
+        display: inline-flex;
+        align-items: center;
+        margin-left: 10px; /* Adjust margin as needed */
+    }
+</style>
+<body class="d-flex flex-column h-100">
+    <section class="bg-light bg-gradient p-md-5" id="verification">
+        <div class="table-responsive">
+            <table id="taskTable" class="display table table-striped table-bordered table-hover" style="width:100%">
+                <thead>
+                    <tr class="custom-table-header">
+                        <th>Document </th>
+                        <th>Entity Name</th>
+                        <th>Location Code</th>
+                        <th>Type of Licence</th>
+                        <th>State</th>
+                        <th>District</th>
+                        <th>Locality</th>
+                        <th>Assigned Date</th>
+                        <th>licence Expiry Date</th>
+                        <th>Status</th>
+                        <th>Document Status</th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+    </section>
+</body>
+<script>
+    var removeDocument;
+    $(document).ready(function (){
+        removeDocument = function(taskId, docId) {
+            var elementToRemove = document.getElementById(`document-${taskId}-${docId}`);
+            if (elementToRemove) {
+                const docData = new FormData()
+                docData.append('taskId', taskId)
+                docData.append('docId', docId)
+                // Perform AJAX upload
+                $.ajax({
+                    url: '{{ url_for("aavana.delete_document") }}',
+                    type: 'POST',
+                    data: docData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+
+                    }
+                });
+                elementToRemove.remove();
+
+
+            }
+        }
+        var taskDatatable = $('#taskTable').DataTable({
+            dom: 'B<"top"lf>t<"bottom"ip><"clear">', // Custom positioning
+            buttons: [
+                'csv', 'excel', 'pdf'
+            ],
+            'processing': true,
+            'serverSide': true,
+            'serverMethod': 'post',
+            'ajax': {
+                'url': "{{ url_for('aavana.aavana_home')}}"
+            },
+            lengthMenu: [10, 25, 50, 100],
+            searching: true,
+            sort: false,
+            "serverSide": true,
+            'columns': [
+                    { data: 'document'},
+                    { data: 'entity_name'},
+                    { data: 'location_code'},
+                    { data: 'type_of_licence'},
+                    { data: 'state'},
+                    { data: 'district'},
+                    { data: 'locality'},
+                    { data: 'assigned_date'},
+                    { data: 'licence_expiry_date'},
+                    { data: 'status'},
+                    { data: 'document_status'},
+                ]
+        });
+
+        // Create search inputs for each column
+        taskDatatable.columns().every(function() {
+            var column = this;
+            var headerText = $(column.header()).text().trim();
+            if(headerText != "Document"){
+                var input = $('<input type="text" placeholder="Search ' + headerText + '">')
+              .appendTo($(column.header()))
+              .on('keyup change', function() {
+                column.search(this.value).draw();
+              });
+            }
+        });
+
+        $(document).on('click', '.btn-file', function() {
+            // Trigger the hidden file input click event
+            $(this).closest('.button-container').find('.hidden-file-input').click();
+        });
+
+        $(document).on('change', '.hidden-file-input', function() {
+            const selectedFile = this.files[0];
+            if (selectedFile) {
+                // Create FormData object and append the file
+                const formData = new FormData()
+                // Get the parent container of the clicked button
+                const container = this.closest(".button-container");
+
+                // Get the data-container-id attribute value (i.e., task_id)
+                let task_id = container.getAttribute("data-container-id");
+                const project_id = container.getAttribute("data-custom-field");
+                formData.append('file', selectedFile);
+                formData.append('task_id', task_id);
+                formData.append('project_id', project_id);
+                // Perform AJAX upload
+                $.ajax({
+                    url: '{{ url_for("aavana.upload_file") }}',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        let task_id = response['task_id'];
+                        let doc_id = response['saved_document_id'];
+                        let file_link = response['file_path'];
+                        let file_name = response['filename'];
+                        var newContainer = document.createElement('div');
+                        newContainer.className = 'download-cancel-container';
+                        newContainer.id = `document-${task_id}-${doc_id}`;
+
+                        // Create the 'a' element for download link
+                        var downloadLink = document.createElement('a');
+                        downloadLink.href = `${file_link}`;
+                        downloadLink.className = 'btn-sm btn-smaller btn-download';
+                        downloadLink.target = '_blank';
+                        downloadLink.textContent = file_name;
+
+                        // Create the 'button' element for cancel
+                        var cancelButton = document.createElement('button');
+                        cancelButton.type = 'button';
+                        cancelButton.className = 'btn btn-link cancel-button';
+                        cancelButton.innerHTML = '<i class="bi bi-x-circle cancel-icon"></i>';
+                        cancelButton.onclick = function() {
+                            removeDocument(task_id, doc_id);
+                        };
+
+                        // Append the download link and cancel button to the new div
+                        newContainer.appendChild(downloadLink);
+                        newContainer.appendChild(cancelButton);
+
+                        // Append the new div to its parent container
+                        container.appendChild(newContainer);
+                    },
+                    error: function(xhr, status, error) {
+                        console.error("File upload failed:", error);
+                        // Handle error response
+                    }
+                });
+                this.value = "";
+            }
+        });
+    });
+</script>
+{% endblock content %}

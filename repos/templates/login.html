@@ -1,0 +1,79 @@
+{% extends "layout.html" %}
+{% block content %}
+<style>
+    .alert {
+    border: 2px solid;
+    padding: 10px;
+    margin: 10px;
+}
+
+.custom-alert-success {
+    background-color: #dff0d8; /* Green background for success messages */
+    border-color: #d6e9c6; /* Green border color */
+    color: #3c763d; /* Dark green text color */
+}
+
+.custom-alert-info {
+    background-color: #d9edf7; /* Blue background for info messages */
+    border-color: #bce8f1; /* Blue border color */
+    color: #31708f; /* Dark blue text color */
+}
+
+.custom-alert-warning {
+    background-color: #fcf8e3; /* Yellow background for warning messages */
+    border-color: #faebcc; /* Yellow border color */
+    color: #8a6d3b; /* Dark yellow text color */
+}
+
+.custom-alert-danger {
+    background-color: #f2dede; /* Red background for danger messages */
+    border-color: #ebccd1; /* Red border color */
+    color: #a94442; /* Dark red text color */
+}
+</style>
+    <div class="container">
+        <div class="row">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+              {% if messages %}
+                <div class="flash-messages">
+                  {% for message, category in messages %}
+                    <div class="alert alert-{{ message }}">
+                      {{ category }}
+                    </div>
+                  {% endfor %}
+                </div>
+              {% endif %}
+            {% endwith %}
+            <div class="col col-md-4 mx-md-auto mx-2 my-4 py-3">
+                <div class="card p-4">
+                    <form action="{{ url_for('users.login') }}" method="post" >
+                        <h4 class="text-center">Log In Traax</h4>
+                        <hr>
+                        <div class="form-group mb-4">
+                            <label class="form-label" for="">Email Address</label>
+                            <input type="email" id="user_email" name="user_email" class="form-control" />
+                        </div>
+                        <div class="form-group mb-4">
+                            <label class="form-label" for="">Password</label>
+                            <input type="password" id="user_password" name="user_password" class="form-control" />
+                        </div>
+                        <div class="d-flex justify-content-between mb-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" value="" id="1" checked />
+                                <label class="form-check-label" for="1"> Remember me </label>
+                            </div>
+                            <div class="">
+<!--                                <a href="#!">Forgot password?</a>-->
+                            </div>
+                        </div>
+                        <!-- Register buttons -->
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-primary btn-block mb-4">Log in</button>
+                            <!--<p>Not a member? <a href="#!">Register</a></p>-->
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}

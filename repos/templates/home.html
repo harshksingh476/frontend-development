@@ -1,0 +1,224 @@
+
+{% extends "layout.html" %}
+{% block content %}
+<style>
+    /* Custom gradient background */
+    .gradient-bg {
+        background: linear-gradient(45deg, #FF5733, #6D4C41); /* Adjust colors as needed */
+        color: white; /* Text color for better visibility */
+    }
+    .blurred {
+        filter: blur(2px); /* Adjust the blur amount as needed */
+    }
+</style>
+<body class="d-flex flex-column h-100">
+    <section class="bg-light bg-gradient p-md-1" id="verification">
+        <div class="container py-4">
+            <!--<div class="row gx-5 justify-content-center">
+                <div class="col-lg-8 col-xl-7">
+                    <div class="text-center">
+                        <h2 class="fw-bolder text-primary">{{ project_name }}</h2>
+                    </div>
+                </div>
+            </div>-->
+            <div class="row d-flex justify-content-center">
+                <div class="col">
+                    <a id="start_task" data-task_name="assigned" href="#" class="text-decoration-none text-dark">
+                        <div class="card h-100 shadow-sm border-0 bg-warning">
+                            <div class="card-body d-flex flex-column justify-content-center align-items-center p-4 text-center">
+                                <h5 class="card-title">Assigned</h5>
+                                <h5 class="card-title">{{status_count.start_count}}</h5>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-auto d-flex align-items-center">
+                    <span style="font-size: 20px;">=</span>
+                </div>
+                <div class="col">
+                    <a id="document_pen_task" data-task_name="Document Pending" href="#" class="text-decoration-none text-dark">
+                        <div class="card h-100 shadow-sm border-0 bg-secondary text-white">
+                            <div class="card-body d-flex flex-column justify-content-center align-items-center p-4 text-center">
+                                <h5 class="card-title">Document Pending</h5>
+                                <h5 class="card-title">{{status_count.doc_pending_count}}</h5>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                <div class="col">
+                    <a id="under_process_task" data-task_name="Under Process" href="#" class="text-decoration-none text-dark">
+                        <div class="card h-100 shadow-sm border-0 bg-info text-white">
+                            <div class="card-body d-flex flex-column justify-content-center align-items-center p-4 text-center">
+                                <h5 class="card-title">Under Process</h5>
+                                <h5 class="card-title">{{status_count.under_process_count}}</h5>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                <div class="col">
+                    <a id="onhold_task" data-task_name="On Hold" href="#" class="text-decoration-none text-dark">
+                        <div class="card h-100 shadow-sm border-0 gradient-bg">
+                            <div class="card-body d-flex flex-column justify-content-center align-items-center p-4 text-center">
+                                <h5 class="card-title">On Hold</h5>
+                                <h5 class="card-title">{{ status_count.onhold_count }}</h5>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                <div class="col">
+                    <a id="closed_task" data-task_name="Closed" href="#" class="text-decoration-none text-dark">
+                        <div class="card h-100 shadow-sm border-0 bg-success text-white">
+                            <div class="card-body d-flex flex-column justify-content-center align-items-center p-4 text-center">
+                                <h5 class="card-title">Closed</h5>
+                                <h5 class="card-title">{{ status_count.closed_count }}</h5>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table id="taskTable" class="display table table-striped table-bordered table-hover" style="width:100%">
+                <thead>
+                    <tr class="table-primary">
+                        <th>Entity Name</th>
+                        <th>Location Code</th>
+                        <th>Type of Licence</th>
+                        <th>State</th>
+                        <th>District</th>
+                        <th>Locality</th>
+                        <th>Assigned Date</th>
+                        <th>licence Expiry Date</th>
+                        <th>Status</th>
+                        <th>Documents</th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+    </section>
+</body>
+<script>
+    $(document).ready(function (){
+        loadDatatableAjax();
+
+        function loadDatatableAjax(){
+            var taskDatatable = $('#taskTable').DataTable({
+                dom: 'B<"top"lf>t<"bottom"ip><"clear">', // Custom positioning
+                buttons: [
+                    'csv', 'excel'
+                ],
+                'processing': true,
+                'serverSide': true,
+                'serverMethod': 'post',
+                'ajax': {
+                    'url':'/home'
+                },
+                lengthMenu: [10, 25, 50, 100], // Specify the options for number of records per page
+                pageLength: 10,
+                searching: true,
+                sort: false,
+                "serverSide": true,
+                'columns': [
+                        { data: 'entity_name'},
+                        { data: 'location_code'},
+                        { data: 'type_of_licence'},
+                        { data: 'state'},
+                        { data: 'district'},
+                        { data: 'locality'},
+                        { data: 'assigned_date'},
+                        { data: 'licence_expiry_date'},
+                        { data: 'status'},
+                        { data: 'document'},
+                    ]
+            });
+            // Create search inputs for each column
+            taskDatatable.columns().every(function() {
+                var column = this;
+                var headerText = $(column.header()).text().trim();
+                if(headerText != "Documents") {
+                    var input = $('<input type="text" placeholder="Search ' + headerText + '">')
+                        .appendTo($(column.header()))
+                        .on('keyup change', function () {
+                            column.search(this.value).draw();
+                        });
+                }
+            });
+        }
+
+
+        $('#start_task, #under_process_task, #onhold_task, #closed_task, #document_pen_task').click(function(event) {
+            if ($(this).hasClass("blurred")) {
+                $(this).removeClass("blurred");
+                $('#taskTable').dataTable().fnDestroy();
+                var taskDatatable = $('#taskTable').DataTable({
+                    dom: 'B<"top"lf>t<"bottom"ip><"clear">', // Custom positioning
+                    buttons: [
+                        'csv', 'excel'
+                    ],
+                    'processing': true,
+                    'serverSide': true,
+                    'serverMethod': 'post',
+                    'ajax': {
+                        url: "{{ url_for('main.home')}}",
+                        dataType: 'JSON',
+                        method: 'POST',
+                        data: {'status': task_status}
+                    },
+                    'lengthMenu': [10, 25, 50, 100],
+                    searching: true,
+                    sort: false,
+                    "serverSide": true,
+                    'columns': [
+                            { data: 'entity_name'},
+                            { data: 'location_code'},
+                            { data: 'type_of_licence'},
+                            { data: 'state'},
+                            { data: 'district'},
+                            { data: 'locality'},
+                            { data: 'assigned_date'},
+                            { data: 'licence_expiry_date'},
+                            { data: 'status'},
+                            { data: 'document'},
+                        ]
+                });
+            }else{
+                $(".text-dark").removeClass("blurred");
+                $(this).toggleClass("blurred");
+                var task_status = $(this).data('task_name');
+                $('#taskTable').dataTable().fnDestroy();
+                var taskDatatable = $('#taskTable').DataTable({
+                    dom: 'B<"top"lf>t<"bottom"ip><"clear">', // Custom positioning
+                    buttons: [
+                        'csv', 'excel'
+                    ],
+                    'processing': true,
+                    'serverSide': true,
+                    'serverMethod': 'post',
+                    'ajax': {
+                        url: "{{ url_for('main.task_status_data')}}",
+                        dataType: 'JSON',
+                        method: 'POST',
+                        data: {'status': task_status}
+                    },
+                    'lengthMenu': [10, 25, 50, 100],
+                    searching: true,
+                    sort: false,
+                    "serverSide": true,
+                    'columns': [
+                            { data: 'entity_name'},
+                            { data: 'location_code'},
+                            { data: 'type_of_licence'},
+                            { data: 'state'},
+                            { data: 'district'},
+                            { data: 'locality'},
+                            { data: 'assigned_date'},
+                            { data: 'licence_expiry_date'},
+                            { data: 'status'},
+                            { data: 'document'},
+                        ]
+                });
+            }
+        });
+    });
+</script>
+{% endblock content %}
