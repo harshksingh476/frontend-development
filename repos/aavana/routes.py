@@ -1,10 +1,10 @@
+import datetime
 from flask import Blueprint, request, jsonify, render_template, url_for, current_app, session
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
-from repos.modules import Task, Document, Project
+from repos.modules import Task, Document, Project, Log
 from sqlalchemy import or_
 import os
-from datetime import datetime
 from repos import db
 from repos.users.routes import logout
 
@@ -15,11 +15,8 @@ aavana = Blueprint('aavana', __name__)
 @aavana.route('/aavana_home', methods=['POST', 'GET'])
 @login_required
 def aavana_home():
-    print(Task.query.all()[0].task_id)
     if not current_user.is_authenticated or 'PROJECT_IDS' not in session:
-        pass
-        # logout()
-
+        logout()
 
 
     if request.method == 'POST':
@@ -94,10 +91,10 @@ def upload_file():
 
             document_data = {}
             document_data['task_id'] = task_id
-            UPLOAD_FOLDER = current_app.config.get('UPLOAD_FOLDER')
+            upload_folder = current_app.config.get('UPLOAD_FOLDER')
             project_name = Project.query.with_entities(Project.project_name).filter_by(id=project_id).first()[0]
             document_data['project_name'] = project_name
-            project_dir = os.path.join(UPLOAD_FOLDER, project_name)
+            project_dir = os.path.join(upload_folder, project_name)
             os.makedirs(project_dir, exist_ok=True)
             task_dir = os.path.join(project_dir, task_id)
             os.makedirs(task_dir, exist_ok=True)
@@ -112,10 +109,14 @@ def upload_file():
             db.session.add(document_info)
             db.session.flush()
             db.session.commit()
-
             saved_document_id = document_info.id
             document_data['saved_document_id'] = saved_document_id
             document_data['message'] = "File uploaded successfully"
+            message = f'Document inserted - doc id {saved_document_id}'
+            log_info = Log(action=message, table_name='document', user_id=current_user.id, action_time=datetime.datetime.now())
+            db.session.add(log_info)
+            db.session.commit()
+            db.session.close()
             return jsonify(document_data), 200
         except Exception as e:
             return jsonify({"error": str(e)}), 500
@@ -128,13 +129,16 @@ def upload_file():
 @aavana.route('/delete_document', methods=['POST'])
 def delete_document():
     document_to_update = Document.query.get(request.form['docId'])
-
     if document_to_update:
         # Update the file_status
         document_to_update.file_status = 1
 
+        message = f'Document deleted - doc id {document_to_update.id}'
+        log_info = Log(action=message, table_name='document', user_id=current_user.id, action_time=datetime.datetime.now())
+        db.session.add(log_info)
         # Commit the changes to the database
         db.session.commit()
+        db.session.close()
 
         # Optionally, you can return a response indicating success
         response = {"message": "File status updated successfully"}
